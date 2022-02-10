@@ -45,14 +45,18 @@ int main()
   // GET THE INPUT DATA
   // browser sends us a string of field name/value pairs from HTML form
   // retrieve the value for each appropriate field name
-  form_iterator st = cgi.getElement("search_type");
-  form_iterator bibletype = cgi.getElement("bible_type");
-  form_iterator book = cgi.getElement("book");
-  form_iterator chapter = cgi.getElement("chapter");
-  form_iterator verse = cgi.getElement("verse");
-  form_iterator nv = cgi.getElement("num_verse");
+  form_iterator st = cgi.getElement("search_type");       // Search type
+  form_iterator bibletype = cgi.getElement("bible_type"); // Bible type
+  form_iterator book = cgi.getElement("book");            // Book number
+  form_iterator chapter = cgi.getElement("chapter");      // Chapter number
+  form_iterator verse = cgi.getElement("verse");          // Verse number
+  form_iterator nv = cgi.getElement("num_verse");         // Number of verses total
 
   // Convert and check input data
+  /* Checking to verify that any number that is written by user is valid.
+   * All numbers must be positive and there are two caps on the verse and
+   * chapter number size. nvNum can be 0 but will still display a single verse.
+   */
   bool validInput = false; // initial is false before check
   if (chapter != cgi.getElements().end() && verse != cgi.getElements().end() && nv != cgi.getElements().end())
   { // Checking if all variable values exist
@@ -92,13 +96,18 @@ int main()
    *        TO LOOK UP THE REQUESTED VERSES
    */
   int btNum = bibletype->getIntegerValue(); // Maps the bible type to string for lookup
-  string btStr;
+  string btStr = "web";                     // Initial value of btStr is catch-all
+  /* Cycles to find which bible needs to be used */
   if (btNum == 0)
     btStr = "dby";
   else if (btNum == 1)
     btStr = "kjv";
-  else
-    btStr = "web";                                                                        // Catch-all if there is an issue
+  else if (btNum == 2)
+    btStr = "web";
+  else if (btNum == 3)
+    btStr = "webster";
+  else if (btNum == 4)
+    btStr = "ylt";                                                                        // Catch-all if there is an issue
   LookupResult result;                                                                    // Stores result from the lookup
   Bible webBible("/home/class/csc3004/Bibles/" + btStr + "-complete");                    // Bible that is used
   Ref ref(book->getIntegerValue(), chapter->getIntegerValue(), verse->getIntegerValue()); // Makes ref to search for
