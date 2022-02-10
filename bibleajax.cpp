@@ -46,15 +46,16 @@ int main()
   // browser sends us a string of field name/value pairs from HTML form
   // retrieve the value for each appropriate field name
   form_iterator st = cgi.getElement("search_type");
+  form_iterator bibletype = cgi.getElement("bible_type");
   form_iterator book = cgi.getElement("book");
   form_iterator chapter = cgi.getElement("chapter");
   form_iterator verse = cgi.getElement("verse");
   form_iterator nv = cgi.getElement("num_verse");
 
   // Convert and check input data
-  bool validInput = false;
+  bool validInput = false; // initial is false before check
   if (chapter != cgi.getElements().end() && verse != cgi.getElements().end() && nv != cgi.getElements().end())
-  {
+  { // Checking if all variable values exist
     int chapterNum = chapter->getIntegerValue();
     int verseNum = verse->getIntegerValue();
     int nvNum = nv->getIntegerValue();
@@ -79,7 +80,9 @@ int main()
       cout << "<p>The number of verse/s must be a positive number.</p>" << endl;
     }
     else
-      validInput = true;
+    {
+      validInput = true; // True if valid
+    }
   }
 
   /* TO DO: OTHER INPUT VALUE CHECKS ARE NEEDED ... but that's up to you! */
@@ -88,10 +91,18 @@ int main()
   /* TO DO: PUT CODE HERE TO CALL YOUR BIBLE CLASS FUNCTIONS
    *        TO LOOK UP THE REQUESTED VERSES
    */
-  LookupResult result;
-  Bible webBible("/home/class/csc3004/Bibles/web-complete");
-  Ref ref(book->getIntegerValue(), chapter->getIntegerValue(), verse->getIntegerValue());
-  Verse verseString = webBible.lookup(ref, result);
+  int btNum = bibletype->getIntegerValue(); // Maps the bible type to string for lookup
+  string btStr;
+  if (btNum == 0)
+    btStr = "dby";
+  else if (btNum == 1)
+    btStr = "kjv";
+  else
+    btStr = "web";                                                                        // Catch-all if there is an issue
+  LookupResult result;                                                                    // Stores result from the lookup
+  Bible webBible("/home/class/csc3004/Bibles/" + btStr + "-complete");                    // Bible that is used
+  Ref ref(book->getIntegerValue(), chapter->getIntegerValue(), verse->getIntegerValue()); // Makes ref to search for
+  Verse verseString = webBible.lookup(ref, result);                                       // Returns the verse from the search
 
   /* SEND BACK THE RESULTS
    * Finally we send the result back to the client on the standard output stream
@@ -100,24 +111,38 @@ int main()
    * so we must include HTML formatting commands to make things look presentable!
    * << "<em> " << result << endl;
    */
-  if (validInput && result == 0)
+  if (validInput && result == 0) // Only if the input is seen as valid and the result is 0
   {
     cout << "Search Type: <b>" << **st << "</b>" << endl;
-    cout << "<p>Your result: <br>"
-         << bookmap[ref.getBook()] << " " << ref.getChap() << ":" << ref.getVerse()
-         << "<em> " << verseString.getVerse() << "</em>" << endl;
-    for (int i = 1; i < nv->getIntegerValue(); i++) // Output only for multiple lines.
-    {
-      cout << "<br>";
-      Verse tempverse = webBible.nextVerse(result);
-      Ref tempref = tempverse.getRef();
-      cout << bookmap[tempref.getBook()] << " " << tempref.getChap() << ":" << tempref.getVerse()
+    cout << "<p>Your result: </p><h3>"
+         << bookmap[ref.getBook()] << "</h3><p>" << ref.getChap() << ":" << ref.getVerse()
+         << "<em> " << verseString.getVerse() << "</em>" << endl; // Displays initial verse refrenced to
+    int r = ref.getBook();
+    for (int i = 1; i < nv->getIntegerValue(); i++) // Output only for multiple lines
+    {                                               // if statement to declare chapter header
+      cout << "<br>" << endl;
+      Verse tempverse = webBible.nextVerse(result); // Gets the next verse in the file
+      Ref tempref = tempverse.getRef();             // Sets the verse's ref for formatting display
+      if (r != tempref.getBook())                   // if the verse is in a new chapter
+      {
+        r = tempref.getBook();
+        cout << "<h3>" << bookmap[tempref.getBook()] << "</h3>" << endl; // Displays new heading for next chapter
+      }
+      cout << tempref.getChap() << ":" << tempref.getVerse() // Displays specified number of verses.
            << " <em>" << tempverse.getVerse() << "</em>" << endl;
     }
   }
-  else
+  else if (result == NO_CHAPTER) // Result status of NO_CHAPTER handling
   {
-    cout << "<p>Invalid Input: <em>report the more specific problem.</em></p>" << endl;
+    cout << "<p>" << webBible.error(result) << ref.getChap() << "</p>" << endl;
+  }
+  else if (result == NO_VERSE) // Result status of NO_VERSE handling
+  {
+    cout << "<p>" << webBible.error(result) << ref.getVerse() << "</p>" << endl;
+  }
+  else // Catch-all if the error is unseen but won't output.
+  {
+    cout << "<p>Invalid Input: <em>the value that was searched for is unavailable</em></p>" << endl;
   }
   return 0;
 }
