@@ -16,6 +16,7 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
+extern map<Ref, int> refMap;
 using namespace std;
 
 // status codes to be returned when looking up a reference
@@ -48,6 +49,10 @@ public:
   // If the file is not open, open the file and return the first verse.
   Verse nextVerse(LookupResult &status);
 
+  string getNextWord(string &line);
+  int buildTextIndex();
+  int indexSearch(const Ref r);
+
   // Information functions (REQUIRED)
   // Return an error message string to describe status
   string error(LookupResult status);
@@ -59,4 +64,4 @@ public:
   // OPTIONAL: Return the reference before the given parameter ref
   Ref prev(const Ref ref, LookupResult &status);
 };
-#endif //Bible_H
+#endif // Bible_H

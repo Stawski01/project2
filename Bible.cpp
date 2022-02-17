@@ -11,6 +11,8 @@
 #include <stdlib.h>
 using namespace std;
 
+map<Ref, int> refMap;
+
 Bible::Bible()
 { // Default constructor
 	infile = "/home/class/csc3004/Bibles/web-complete";
@@ -58,7 +60,6 @@ Verse Bible::lookup(Ref ref, LookupResult &status)
 
 	return (aVerse);
 }
-
 // REQUIRED: Return the next verse from the Bible file stream if the file is open.
 // If the file is not open, open the file and return the first verse.
 // Crete verse from line.
@@ -83,13 +84,75 @@ Verse Bible::nextVerse(LookupResult &status)
 		if (instream.eof())			  // Displays error if file ends
 		{
 			cerr << error(NO_BOOK) << endl;
-			exit(2);
+			return Verse(line);
 		}
 		Verse v(line); // Makes line into verse v
 		return v;	   // returns verse
 	}
 }
 
+/*  Word search functionality from shakespearelookup */
+/* string Bible::getNextWord(string &line)
+ *{
+ *	string word = "";
+ *	int pos;
+ *
+ *	if (line.length() > 1)
+ *	{
+ *		pos = line.find_first_of(".,; :?!"
+ *								 "''()");
+ *		// get next word
+ *		if (pos != 0)
+ *		{
+ *			word = line.substr(0, pos);
+ *		}
+ *		// trim the line
+ *		if (pos == string::npos)
+ *		{
+ *			pos = line.length() - 1;
+ *		}
+ *		line = line.substr(pos + 1, 2000);
+ *	}
+ *	return word;
+ *}
+ */
+int Bible::buildTextIndex()
+{
+	// instream - input file descriptor
+	int position;		/* location of line in the file */
+	int refcounter = 0; // Reference count
+	string text, line;
+	Verse tempVerse;
+	LookupResult tempStatus;
+	// int pos;
+
+	instream.open(infile.c_str(), ios::in); // Opens file
+	if (!instream)							// If file is not open
+	{
+		cerr << "Error - can't open input file: " << infile << endl;
+		return 0; // false, indicates error
+	}
+	while (!instream.fail())
+	{
+		/* Get the file position at beginning of line */
+		position = instream.tellg();
+		instream.unsetf(ios::skipws); // Removes white space
+		getline(instream, line);	  // Get's the line of the file
+		/* get the next line */
+		if (!instream.eof())
+		{
+			Ref tempRef(line);
+			refMap[tempRef] = position;
+			refcounter++;
+			cout << refcounter << " : " << position << endl;
+		}
+	}
+	return 1; // True if it returns a 1.
+}
+
+/* int Bible::indexSearch(Ref r)
+{
+} */
 // REQUIRED: Return an error message string to describe status
 string Bible::error(LookupResult status)
 {

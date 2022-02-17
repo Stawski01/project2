@@ -68,41 +68,45 @@ int Ref::getVerse() { return verse; } // Access verse number
 // REQUIRED: == comparison
 int Ref::comparison(Ref u)
 {
-  if (book == u.getBook())
+  if (this == &u)
   {
-    if (chap == u.getChap())
-    {
-      if (verse == u.getVerse())
-      {
-        return 0; // Returns if completed
-      }
-      else
-      {
-        if (verse < u.getVerse())
-          return 3; // Returns if NO_VERSE
-        else
-          return 4; // incomplete
-      }
-    }
-    else
-    {
-      if (chap < u.getChap())
-        return 2; // Returns if NO_CHAP
-      else
-        return 4; // incomplete
-    }
+    return 0; // Returns if completed
+  }
+  if (verse < u.getVerse())
+    return 3; // Returns if NO_VERSE
+  else
+    return 4; // incomplete
+  if (chap < u.getChap())
+    return 2; // Returns if NO_CHAP
+  else
+    return 4; // incomplete
+  if (book < u.getBook())
+    return 1; // Returns if NO_BOOK
+  else
+    return 4; // incomplete
+}
+bool Ref::operator==(const Ref r)
+{
+  if (this->book == r.book && this->chap == r.chap && this->verse == r.verse)
+  {
+    return true;
   }
   else
-  {
-    if (book < u.getBook())
-      return 1; // Returns if NO_BOOK
-    else
-      return 4; // incomplete
-  }
+    return false;
 }
-bool Ref::operator==(const Ref r) { return 0; }
 
 // OPTIONAL: define < and > comparisons
+bool Ref::operator<(const Ref r) const
+{
+  if (this->book < r.book)
+    return true;
+  else if (this->book == r.book && this->chap < r.chap)
+    return true;
+  else if (this->book == r.book && this->chap == r.chap && this->verse < r.verse)
+    return true;
+  else
+    return false;
+}
 
 // TO DO: modify display function to show book name instead of book number
 void Ref::display()
