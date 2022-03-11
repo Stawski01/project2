@@ -33,7 +33,7 @@ public:
    int getVerse(); // Access verse number
    // REQUIRED Comparison: determine if two references are equal
    int comparison(Ref);
-   bool operator==(const Ref);
+   bool operator==(const Ref) const;
    bool operator<(const Ref r) const;
    // OPTIONAL: < and > comparisons for Ref objects might also be useful
 

@@ -43,11 +43,11 @@ public:
   Bible(const string s); // Constructor – pass name of bible file
 
   // REQUIRED: Find and return a verse in this Bible, given a reference
-  Verse lookup(const Ref ref, LookupResult &status);
+  Verse lookup(int pos, const Ref ref, LookupResult &status);
   // REQUIRED:
   // Return the next verse from the Bible file stream if the file is open.
   // If the file is not open, open the file and return the first verse.
-  Verse nextVerse(LookupResult &status);
+  Verse nextVerse(int pos, LookupResult &status);
 
   string getNextWord(string &line);
   int buildTextIndex();

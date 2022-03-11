@@ -16,40 +16,46 @@ map<Ref, int> refMap;
 Bible::Bible()
 { // Default constructor
 	infile = "/home/class/csc3004/Bibles/web-complete";
+	int i = buildTextIndex();
 }
 
 // Constructor – pass bible filename
-Bible::Bible(const string s) { infile = s; }
+Bible::Bible(const string s)
+{
+	infile = s;
+	int i = buildTextIndex();
+}
 
 // REQUIRED: lookup finds a given verse in this Bible
-Verse Bible::lookup(Ref ref, LookupResult &status)
+Verse Bible::lookup(int pos, Ref ref, LookupResult &status)
 {
 	// TODO: scan the file to retrieve the line that holds ref ...
 	// update the status variable
 	// create and return the verse object
-	Verse aVerse(nextVerse(status)); // default verse, to be replaced by a Verse object
-									 // that is constructed from a line in the file.
+	Verse aVerse(nextVerse(pos, status)); // default verse, to be replaced by a Verse object
+										  // that is constructed from a line in the file.
 	status = SUCCESS;
-	while (ref.comparison(aVerse.getRef()) != 0) // Parse to find the verse in the book
+
+	while (ref.comparison(aVerse.getRef()) != SUCCESS) // Parse to find the verse in the book
 	{
-		if (ref.comparison(aVerse.getRef()) == 4) // Continues to parse if 0
+		if (ref.comparison(aVerse.getRef()) == OTHER) // Continues to parse if 0
 		{
 			status = OTHER;
-			aVerse = nextVerse(status);
+			aVerse = nextVerse(pos, status);
 		}
-		else if (ref.comparison(aVerse.getRef()) == 1) // No Chapter error
+		else if (ref.comparison(aVerse.getRef()) == NO_BOOK) // No Chapter error
 		{
 			status = NO_CHAPTER;
 			cerr << error(status) << ref.getChap() << endl;
 			break;
 		}
-		else if (ref.comparison(aVerse.getRef()) == 2) // No Verse error
+		else if (ref.comparison(aVerse.getRef()) == NO_CHAPTER) // No Verse error
 		{
 			status = NO_VERSE;
 			cerr << error(status) << ref.getVerse() << endl;
 			break;
 		}
-		else if (ref.comparison(aVerse.getRef()) == 3) // No Verse error
+		else if (ref.comparison(aVerse.getRef()) == NO_VERSE) // No Verse error
 		{
 			status = NO_VERSE;
 			cerr << error(status) << ref.getVerse() << endl;
@@ -63,7 +69,7 @@ Verse Bible::lookup(Ref ref, LookupResult &status)
 // REQUIRED: Return the next verse from the Bible file stream if the file is open.
 // If the file is not open, open the file and return the first verse.
 // Crete verse from line.
-Verse Bible::nextVerse(LookupResult &status)
+Verse Bible::nextVerse(int pos, LookupResult &status)
 {
 	if (!isOpen) // Opens file if not open
 	{
@@ -79,15 +85,10 @@ Verse Bible::nextVerse(LookupResult &status)
 	}
 	else // If file is open grabs next line
 	{
-		instream.unsetf(ios::skipws); // Removes white space
-		getline(instream, line);	  // Next line
-		if (instream.eof())			  // Displays error if file ends
-		{
-			cerr << error(NO_BOOK) << endl;
-			return Verse(line);
-		}
-		Verse v(line); // Makes line into verse v
-		return v;	   // returns verse
+		instream.seekg(pos, ios::beg);
+		getline(instream, line); // Next line
+		Verse v(line);			 // Makes line into verse v
+		return v;				 // returns verse
 	}
 }
 
@@ -116,11 +117,13 @@ Verse Bible::nextVerse(LookupResult &status)
  *	return word;
  *}
  */
+
+// If 1 then True if 0 then False.
 int Bible::buildTextIndex()
 {
 	// instream - input file descriptor
-	int position;		/* location of line in the file */
-	int refcounter = 0; // Reference count
+	int position; /* location of line in the file */
+	// int refcounter = 0; // Reference count
 	string text, line;
 	Verse tempVerse;
 	LookupResult tempStatus;
@@ -141,18 +144,32 @@ int Bible::buildTextIndex()
 		/* get the next line */
 		if (!instream.eof())
 		{
-			Ref tempRef(line);
-			refMap[tempRef] = position;
-			refcounter++;
-			cout << refcounter << " : " << position << endl;
+			refMap[Ref(line)] = position;
+			// refcounter++;
+			// cout << refcounter << " : " << position << endl;
 		}
 	}
+	instream.close();
 	return 1; // True if it returns a 1.
 }
 
-/* int Bible::indexSearch(Ref r)
+int Bible::indexSearch(Ref r)
 {
-} */
+	map<Ref, int>::iterator it; // iterator for find
+	int blank;					// return for no matches
+
+	/* return the refs */
+	/* First use find, so as to NOT create a new entry in refs */
+	it = refMap.find(r);
+	if (it == refMap.end())
+	{
+		return blank;
+	}
+	else
+	{
+		return refMap[r]; // Position of the final ref
+	}
+}
 // REQUIRED: Return an error message string to describe status
 string Bible::error(LookupResult status)
 {
@@ -174,7 +191,23 @@ void Bible::display()
 
 // OPTIONAL access functions
 // OPTIONAL: Return the reference after the given ref
-// Ref Bible::next(const Ref ref, LookupResult &status) {}
+Ref Bible::next(const Ref ref, LookupResult &status)
+{
+	map<Ref, int>::iterator it; // iterator for find
+	Ref blank;					// return for no matches
+	/* return the refs */
+	/* First use find, so as to NOT create a new entry in refs */
+	it = refMap.find(ref); // gets the position of ref in map
+	it++;				   // goes to next position in map
+	if (it == refMap.end())
+	{
+		return blank; // empty return
+	}
+	else
+	{
+		return it->first; // next ref returned
+	}
+}
 
 // OPTIONAL: Return the reference before the given ref
 // Ref Bible::prev(const Ref ref, LookupResult &status) {}

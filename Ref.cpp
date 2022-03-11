@@ -68,31 +68,34 @@ int Ref::getVerse() { return verse; } // Access verse number
 // REQUIRED: == comparison
 int Ref::comparison(Ref u)
 {
-  if (this == &u)
+  if (this->book == u.book && this->chap == u.chap && this->verse == u.verse)
   {
     return 0; // Returns if completed
   }
-  if (verse < u.getVerse())
-    return 3; // Returns if NO_VERSE
   else
-    return 4; // incomplete
-  if (chap < u.getChap())
-    return 2; // Returns if NO_CHAP
-  else
-    return 4; // incomplete
-  if (book < u.getBook())
-    return 1; // Returns if NO_BOOK
-  else
-    return 4; // incomplete
+  {
+    if (verse < u.getVerse())
+      return 3; // Returns if NO_VERSE
+    else if (chap < u.getChap())
+      return 2; // Returns if NO_CHAP
+    else if (book < u.getBook())
+      return 1; // Returns if NO_BOOK
+    else
+      return 4; // incomplete
+  }
 }
-bool Ref::operator==(const Ref r)
+
+// Compares two ref objects to see if they are the same.
+bool Ref::operator==(const Ref r) const
 {
   if (this->book == r.book && this->chap == r.chap && this->verse == r.verse)
   {
     return true;
   }
   else
+  {
     return false;
+  }
 }
 
 // OPTIONAL: define < and > comparisons

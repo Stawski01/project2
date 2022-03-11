@@ -34,19 +34,13 @@ int main(int argc, char **argv)
 		ref.display();
 		cout << endl;
 
-		webBible.buildTextIndex();
-		cout << "Reference count: " << refMap.size() << endl; // Size of the Map for number of references.
-		map<Ref, int>::iterator test = refMap.find(Ref("66:22:21"));
-		if (test == refMap.end())
-		{
-			cout << "Final byte position: Error" << endl;
-		}
-		else
-		{
-			cout << "Final byte position: " << refMap[Ref("66:22:21")] << endl; // Position of the final ref
-		}
-
-		/* verse = webBible.lookup(ref, result);
+		// cout << "Reference count: " << refMap.size() << endl; // Size of the Map for number of references.
+		// cout << "First byte value: " << webBible.indexSearch(Ref("1:1:1")) << endl;
+		// cout << "Second byte value: " << webBible.indexSearch(Ref("1:1:2")) << endl;
+		// cout << "Third byte value: " << webBible.indexSearch(Ref("1:1:3")) << endl;
+		// cout << "Final byte value: " << webBible.indexSearch(Ref("66:22:21")) << endl;
+		int pos = webBible.indexSearch(ref); // Position of the verse that is wanted.
+		verse = webBible.lookup(pos, ref, result);
 		cout << "Result status: " << result << endl;
 		if (result == 0)
 		{
@@ -56,11 +50,13 @@ int main(int argc, char **argv)
 				for (int i = 1; i < atoi(argv[4]); i++)
 				{
 					cout << endl;
-					webBible.nextVerse(result).display();
+					ref = webBible.next(ref, result);
+					verse = webBible.lookup(webBible.indexSearch(ref), ref, result);
+					verse.display();
 				}
 			}
 			cout << endl;
-		} */
+		}
 	}
 	else
 	{
