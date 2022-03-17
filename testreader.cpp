@@ -40,22 +40,33 @@ int main(int argc, char **argv)
 		// cout << "Third byte value: " << webBible.indexSearch(Ref("1:1:3")) << endl;
 		// cout << "Final byte value: " << webBible.indexSearch(Ref("66:22:21")) << endl;
 		int pos = webBible.indexSearch(ref); // Position of the verse that is wanted.
-		verse = webBible.lookup(pos, ref, result);
-		cout << "Result status: " << result << endl;
-		if (result == 0)
+		if (pos != -1)
 		{
-			verse.display();
-			if (argc == 5 && result == 0)
+			verse = webBible.lookup(pos, ref, result);
+			cout << "Result status: " << result << endl;
+			if (result == 0)
 			{
-				for (int i = 1; i < atoi(argv[4]); i++)
+				verse.display();
+				if (argc == 5 && result == 0)
 				{
-					cout << endl;
-					ref = webBible.next(ref, result);
-					verse = webBible.lookup(webBible.indexSearch(ref), ref, result);
-					verse.display();
+					for (int i = 1; i < atoi(argv[4]); i++)
+					{
+						cout << endl;
+						ref = webBible.next(ref, result);
+						int pos = webBible.indexSearch(ref);
+						if (pos <= 0)
+						{
+							verse = webBible.lookup(pos, ref, result);
+							verse.display();
+						}
+					}
 				}
+				cout << endl;
 			}
-			cout << endl;
+		}
+		else
+		{
+			cout << "ERROR: Position could not be found for Ref: " << endl;
 		}
 	}
 	else

@@ -85,10 +85,10 @@ Verse Bible::nextVerse(int pos, LookupResult &status)
 	}
 	else // If file is open grabs next line
 	{
-		instream.seekg(pos, ios::beg);
-		getline(instream, line); // Next line
-		Verse v(line);			 // Makes line into verse v
-		return v;				 // returns verse
+		instream.seekg(pos, ios::beg); // sets instream to the correct position
+		getline(instream, line);	   // Next line
+		Verse v(line);				   // Makes line into verse v
+		return v;					   // returns verse
 	}
 }
 
@@ -156,14 +156,14 @@ int Bible::buildTextIndex()
 int Bible::indexSearch(Ref r)
 {
 	map<Ref, int>::iterator it; // iterator for find
-	int blank;					// return for no matches
+	// int blank;					// return for no matches
 
 	/* return the refs */
 	/* First use find, so as to NOT create a new entry in refs */
 	it = refMap.find(r);
 	if (it == refMap.end())
 	{
-		return blank;
+		return -1; // -1 position if couldn't get a value.
 	}
 	else
 	{

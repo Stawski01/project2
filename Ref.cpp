@@ -68,7 +68,8 @@ int Ref::getVerse() { return verse; } // Access verse number
 // REQUIRED: == comparison
 int Ref::comparison(Ref u)
 {
-  if (this->book == u.book && this->chap == u.chap && this->verse == u.verse)
+  Ref test = *this; // Change pointer to ref for comparison.
+  if (test == u)
   {
     return 0; // Returns if completed
   }

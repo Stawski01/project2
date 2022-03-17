@@ -18,26 +18,43 @@ USER= wilsweetman
 CC= g++
 CFLAGS= -g -std=c++11
 
-all:	testreader
-# bibleajax.cgi PutCGI PutHTML
+all:	wblookupclient wblookupserver PutCGI PutHTML
+
+wblookupclient.o:	wblookupclient.cpp fifo.h
+	$(CC) $(CFLAGS) -c wblookupclient.cpp
+# -l option is necessary to link with cgicc library
+
+wblookupserver.o: wblookupserver.cpp Ref.o Verse.o Bible.o 
+	$(CC) $(CFLAGS) -c wblookupserver.cpp
+
+wblookupclient:	wblookupclient.o fifo.o
+	$(CC) $(CFLAGS) -o wblookupclient wblookupclient.o fifo.o -L/usr/local/lib -lcgicc
+	
+
+wblookupserver: wblookupserver.o Ref.o Verse.o Bible.o fifo.o
+	$(CC) $(CFLAGS) -o wblookupserver wblookupserver.o Ref.o Verse.o Bible.o fifo.o
+
+fifo.o: fifo.cpp fifo.h
+	$(CC) $(CFLAGS) -c fifo.cpp
+
 testreader.o : Ref.h Verse.h Bible.h testreader.cpp
 	$(CC) $(CFLAGS) -c testreader.cpp
 
-# Build the executable
-testreader: Ref.o Verse.o Bible.o testreader.o
-	$(CC) $(CFLAGS) -o testreader Ref.o Verse.o Bible.o testreader.o
-# TO DO: For bibleajax.cgi, add dependencies to include
-# compiled classes from Project 1 to be linked into the executable program
-bibleajax.cgi:	bibleajax.o Ref.o Verse.o Bible.o
-		$(CC) $(CFLAGS) -o bibleajax.cgi bibleajax.o Ref.o Verse.o Bible.o -lcgicc
-		# -l option is necessary to link with cgicc library
+# # Build the executable
+# testreader: Ref.o Verse.o Bible.o testreader.o
+# 	$(CC) $(CFLAGS) -o testreader Ref.o Verse.o Bible.o testreader.o
+
+
+# bibleajax.cgi:	bibleajax.o Ref.o Verse.o Bible.o
+# 		$(CC) $(CFLAGS) -o bibleajax.cgi bibleajax.o Ref.o Verse.o Bible.o -lcgicc
+# 		# -l option is necessary to link with cgicc library
 
 # main program to handle AJAX/CGI requests for Bible references
-bibleajax.o:	bibleajax.cpp
-		$(CC) $(CFLAGS) -c bibleajax.cpp
 
-# TO DO: copy targets to build classes from Project 1:
-# Bible.o, Ref.o, Verse.o
+
+# bibleajax.o:	bibleajax.cpp
+# 		$(CC) $(CFLAGS) -c bibleajax.cpp
+
 # Ref Object
 Ref.o : Ref.h Ref.cpp
 	$(CC) $(CFLAGS) -c Ref.cpp
@@ -51,18 +68,29 @@ Bible.o : Ref.h Verse.h Bible.h Bible.cpp
 	$(CC) $(CFLAGS) -c Bible.cpp
 
 			
-PutCGI:	bibleajax.cgi
-		chmod 755 bibleajax.cgi
-		cp bibleajax.cgi /var/www/html/class/csc3004/$(USER)/cgi-bin
+# PutCGI:	bibleajax.cgi
+# 		chmod 755 bibleajax.cgi
+# 		cp bibleajax.cgi /var/www/html/class/csc3004/$(USER)/cgi-bin
 
+# 		echo "Current contents of your cgi-bin directory: "
+# 		ls -l /var/www/html/class/csc3004/$(USER)/cgi-bin/
+
+# PutHTML:
+# 		cp bibleajax.html /var/www/html/class/csc3004/$(USER)
+
+# 		echo "Current contents of your HTML directory: "
+# 		ls -l /var/www/html/class/csc3004/$(USER)
+
+PutCGI: wblookupclient
+		chmod 757 wblookupclient
+		cp wblookupclient /var/www/html/class/csc3004/$(USER)/cgi-bin
 		echo "Current contents of your cgi-bin directory: "
 		ls -l /var/www/html/class/csc3004/$(USER)/cgi-bin/
 
-PutHTML:
-		cp bibleajax.html /var/www/html/class/csc3004/$(USER)
-
+PutHTML: bibleindex.html
+		cp bibleindex.html /var/www/html/class/csc3004/$(USER)
 		echo "Current contents of your HTML directory: "
-		ls -l /var/www/html/class/csc3004/$(USER)
+		ls -l  /var/www/html/class/csc3004/$(USER)
 
 clean:		
-		rm *.o core bibleajax.cgi testreader
+		rm *.o core wblookupclient wblookupserver

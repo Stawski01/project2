@@ -12,8 +12,8 @@
 #include <string>
 #include <stdlib.h>
 #include <map>
+extern std::map<int, std::string> bookmap;
 using namespace std;
-extern map<int, string> bookmap;
 // GetNextToken returns a token from str, which contains all characters
 // up to the first character from delimiters
 string GetNextToken(string &str, const string &delimiters);
