@@ -20,19 +20,19 @@ CFLAGS= -g -std=c++11
 
 all:	wblookupclient wblookupserver PutCGI PutHTML
 
-wblookupclient.o:	wblookupclient.cpp fifo.h
+wblookupclient.o:	wblookupclient.cpp fifo.h Ref.h Verse.h Bible.h logfile.h
 	$(CC) $(CFLAGS) -c wblookupclient.cpp
 # -l option is necessary to link with cgicc library
 
-wblookupserver.o: wblookupserver.cpp Ref.o Verse.o Bible.o 
-	$(CC) $(CFLAGS) -c wblookupserver.cpp
+wblookupclient:	wblookupclient.o fifo.o Ref.o Verse.o Bible.o 
+	$(CC) $(CFLAGS) -o wblookupclient wblookupclient.o fifo.o Ref.o Verse.o Bible.o -L/usr/local/lib -lcgicc
 
-wblookupclient:	wblookupclient.o fifo.o
-	$(CC) $(CFLAGS) -o wblookupclient wblookupclient.o fifo.o -L/usr/local/lib -lcgicc
-	
 
-wblookupserver: wblookupserver.o Ref.o Verse.o Bible.o fifo.o
-	$(CC) $(CFLAGS) -o wblookupserver wblookupserver.o Ref.o Verse.o Bible.o fifo.o
+wblookupserver.o: wblookupserver.cpp fifo.h Ref.h Verse.h Bible.h
+	$(CC) $(CFLAGS) -c wblookupserver.cpp	
+
+wblookupserver: wblookupserver.o fifo.o Ref.o Verse.o Bible.o 
+	$(CC) $(CFLAGS) -o wblookupserver wblookupserver.o fifo.o Ref.o Verse.o Bible.o 
 
 fifo.o: fifo.cpp fifo.h
 	$(CC) $(CFLAGS) -c fifo.cpp

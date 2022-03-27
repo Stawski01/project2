@@ -11,8 +11,6 @@
 #include <stdlib.h>
 using namespace std;
 
-map<Ref, int> refMap;
-
 Bible::Bible()
 { // Default constructor
 	infile = "/home/class/csc3004/Bibles/web-complete";
@@ -27,41 +25,51 @@ Bible::Bible(const string s)
 }
 
 // REQUIRED: lookup finds a given verse in this Bible
-Verse Bible::lookup(int pos, Ref ref, LookupResult &status)
+Verse Bible::lookup(Ref ref, LookupResult &status)
 {
-	// TODO: scan the file to retrieve the line that holds ref ...
-	// update the status variable
-	// create and return the verse object
-	Verse aVerse(nextVerse(pos, status)); // default verse, to be replaced by a Verse object
-										  // that is constructed from a line in the file.
-	status = SUCCESS;
-
-	while (ref.comparison(aVerse.getRef()) != SUCCESS) // Parse to find the verse in the book
+	int pos = indexSearch(ref); // Indexed position of ref in file
+	Verse aVerse;				// Blank verse
+	if (pos != -1)
 	{
-		if (ref.comparison(aVerse.getRef()) == OTHER) // Continues to parse if 0
+		if (!isOpen) // Opens file if not open
 		{
-			status = OTHER;
-			aVerse = nextVerse(pos, status);
+			instream.open(infile.c_str(), ios::in);
+			isOpen = true;
 		}
-		else if (ref.comparison(aVerse.getRef()) == NO_BOOK) // No Chapter error
+		string line;   // Makes String to capture next line
+		if (!instream) // Checks if file is open
 		{
-			status = NO_CHAPTER;
-			cerr << error(status) << ref.getChap() << endl;
-			break;
+			error(OTHER);
+			Verse v;
 		}
-		else if (ref.comparison(aVerse.getRef()) == NO_CHAPTER) // No Verse error
+		else // If file is open grabs next line
 		{
-			status = NO_VERSE;
-			cerr << error(status) << ref.getVerse() << endl;
-			break;
+			instream.seekg(pos, ios::beg); // sets instream to the correct position
+			getline(instream, line);	   // Next line
+			Verse v(line);				   // Makes line into verse v
+			status = SUCCESS;
+			return v;
 		}
-		else if (ref.comparison(aVerse.getRef()) == NO_VERSE) // No Verse error
-		{
-			status = NO_VERSE;
-			cerr << error(status) << ref.getVerse() << endl;
-			break;
-		}
-		status = SUCCESS; // Status only if it leaves the loop naturally.
+	}
+
+	if (ref.comparison(aVerse.getRef()) == NO_BOOK) // No Chapter error
+	{
+		status = NO_CHAPTER;
+		cerr << error(status) << ref.getChap() << endl;
+	}
+	else if (ref.comparison(aVerse.getRef()) == NO_CHAPTER) // No Verse error
+	{
+		status = NO_VERSE;
+		cerr << error(status) << ref.getVerse() << endl;
+	}
+	else if (ref.comparison(aVerse.getRef()) == NO_VERSE) // No Verse error
+	{
+		status = NO_VERSE;
+		cerr << error(status) << ref.getVerse() << endl;
+	}
+	else
+	{
+		status = OTHER;
 	}
 
 	return (aVerse);
@@ -91,32 +99,6 @@ Verse Bible::nextVerse(int pos, LookupResult &status)
 		return v;					   // returns verse
 	}
 }
-
-/*  Word search functionality from shakespearelookup */
-/* string Bible::getNextWord(string &line)
- *{
- *	string word = "";
- *	int pos;
- *
- *	if (line.length() > 1)
- *	{
- *		pos = line.find_first_of(".,; :?!"
- *								 "''()");
- *		// get next word
- *		if (pos != 0)
- *		{
- *			word = line.substr(0, pos);
- *		}
- *		// trim the line
- *		if (pos == string::npos)
- *		{
- *			pos = line.length() - 1;
- *		}
- *		line = line.substr(pos + 1, 2000);
- *	}
- *	return word;
- *}
- */
 
 // If 1 then True if 0 then False.
 int Bible::buildTextIndex()

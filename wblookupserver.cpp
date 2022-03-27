@@ -25,81 +25,101 @@ using namespace std;
 int main(int argc, char **argv)
 {
 	// Create fifo to prepare pipe for sending and receiving
-	string receive_pipe = "SSrequest"; // receive pipe name
-	string send_pipe = "SSreply";	   // send pipe name
+	string receive_pipe = "WBrequest"; // receive pipe name
+	string send_pipe = "WBreply";	   // send pipe name
 	Fifo recfifo(receive_pipe);		   // Creates receive pipe
 	Fifo sendfifo(send_pipe);		   // Creates send pipe
 
-	/* Find a way to move bible class inside loop to use a different bible eache time */
-	Bible webBible("/home/class/csc3004/Bibles/web-complete"); // Bible object
+	/* All bible objects */
+	Bible dbybible("/home/class/csc3004/Bibles/dby-complete");
+	Bible kjvbible("/home/class/csc3004/Bibles/kjv-complete");
+	Bible webbible("/home/class/csc3004/Bibles/web-complete");
+	Bible websterbible("/home/class/csc3004/Bibles/webster-complete");
+	Bible yltbible("/home/class/csc3004/Bibles/ylt-complete");
 	while (true)
 	{
+		Bible *bible;
 		recfifo.openread(); // Opens receive pipe
 		Verse verse;		// Verse that will be sent back
 		LookupResult result;
 		string info_recieved = recfifo.recv(); // Recieve string from client
 		Ref ref(info_recieved);				   // Turns string into ref object
-		cout << "String sent: " << info_recieved << endl;
+		cout << "String recieved: " << info_recieved << endl;
 
 		string numberofverses = recfifo.recv();
+		string recievedBible = recfifo.recv();
+
+		if (recievedBible == "dby")
+			bible = &dbybible;
+		else if (recievedBible == "kjv")
+			bible = &kjvbible;
+		else if (recievedBible == "web")
+			bible = &webbible;
+		else if (recievedBible == "webster")
+			bible = &websterbible;
+		else if (recievedBible == "ylt")
+			bible = &yltbible;
+		else
+			bible = &webbible; // Default bible->
 
 		cout << "Using Bible from: ";
-		webBible.display();
+		bible->display();
 
 		// Use the Bible object to retrieve the verse by reference
 		cout << "Looking up reference: ";
 		ref.display();
 		cout << endl;
 
-		// cout << "Reference count: " << refMap.size() << endl; // Size of the Map for number of references.
-		// cout << "First byte value: " << webBible.indexSearch(Ref("1:1:1")) << endl;
-		// cout << "Second byte value: " << webBible.indexSearch(Ref("1:1:2")) << endl;
-		// cout << "Third byte value: " << webBible.indexSearch(Ref("1:1:3")) << endl;
-		// cout << "Final byte value: " << webBible.indexSearch(Ref("66:22:21")) << endl;
-		int pos = webBible.indexSearch(ref); // Position of the verse that is wanted.
-		if (pos > -1)
+		string message;
+		verse = bible->lookup(ref, result); // Makes the verse
+		sendfifo.openwrite();				// Opens send pipe
+		if (result == 0)					// Outputs if result is a SUCCESS
 		{
-			string message;
-			verse = webBible.lookup(pos, ref, result); // Makes the verse
-			sendfifo.openwrite();					   // Opens send pipe
-			if (result == 0)						   // Outputs if result is a SUCCESS
+			sendfifo.send(to_string(result));
+			message = to_string(ref.getBook()) + ":" + to_string(ref.getChap()) +
+					  ":" + to_string(ref.getVerse()) + " " + verse.getVerse(); // Prepares initial verse refrenced to
+			cout << "Sending message:" << message << endl;
+			sendfifo.send(message); // Sends first verse
+			cout << "sent." << endl;
+
+			int t = stoi(numberofverses);
+			cout << "number of verses received: " << numberofverses << endl;
+			for (int i = 1; i < t; i++) // Loop for multiple verses
 			{
-				message += "<p>Search Type: <b> reference </b></p>";
-				message += "<p>Your result: </p><h3>" + bookmap[ref.getBook()] + "</h3><p>" +
-						   to_string(ref.getChap()) + ":" + to_string(ref.getVerse()) +
-						   "<em> " + verse.getVerse() + "</em>"; // Prepares initial verse refrenced to
-				cout << "Sending message." << endl;
-				sendfifo.send(message); // Sends first verse
-
-				/* int r = ref.getBook(); // For formatting of multiple verse loop
-				int t = stoi(numberofverses);
-				cout << "number of verses received: " << numberofverses << endl;
-				for (int i = 1; i < t; i++) // Loop for multiple verses
+				ref = bible->next(ref, result); // Sets the verse's ref for formatting display
+				if (result == 0)
 				{
-					ref = webBible.next(ref, result); // Sets the verse's ref for formatting display
-					int pos = webBible.indexSearch(ref);
-					if (pos >= 0)
+					verse = bible->lookup(ref, result); // Gets the next verse in the file
+					if (result == 0)
 					{
-						verse = webBible.lookup(pos, ref, result); // Gets the next verse in the file
-
-						message = "<br>";
-						if (r != ref.getBook()) // if the verse is in a new chapter
-						{
-							r = ref.getBook();
-							message += "<h3>" + bookmap[ref.getBook()] + "</h3>"; // Displays new heading for next chapter
-						}
-						message += to_string(ref.getChap()) + ":" + to_string(ref.getVerse()) + // Displays specified number of verses.
-								   " <em>" + verse.getVerse() + "</em>";
-						cout << "Sending message in loop." << endl;
+						sendfifo.send(to_string(result));
+						message = to_string(ref.getBook()) + ":" + to_string(ref.getChap()) +
+								  ":" + to_string(ref.getVerse()) + " " + verse.getVerse();
+						cout << "Sending message in loop #" << i << ": " << message << endl;
 						sendfifo.send(message);
 					}
-				} */
+					else
+					{
+						bible->error(result);
+						sendfifo.send(to_string(result));
+						break;
+					}
+				}
+				else
+				{
+					bible->error(result);
+					sendfifo.send(to_string(result));
+					break;
+				}
 			}
 		}
 		else
 		{
-			cout << "ERROR: Position could not be found for Ref: " << endl;
+			bible->error(result);
+			sendfifo.send(to_string(result));
 		}
+
+		sendfifo.send("0");
 		sendfifo.send("$end");
 		sendfifo.fifoclose();
 	}

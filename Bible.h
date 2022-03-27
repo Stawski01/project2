@@ -16,7 +16,7 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
-extern map<Ref, int> refMap;
+
 using namespace std;
 
 // status codes to be returned when looking up a reference
@@ -35,6 +35,7 @@ private:
   string infile;     // file path name
   ifstream instream; // input stream, used when file is open
   bool isOpen;       // true if file is open
+  std::map<Ref, int> refMap;
   // OPTIONAL: you may add variables to keep track of
   // the current line and/or reference when scanning the file
 
@@ -43,7 +44,7 @@ public:
   Bible(const string s); // Constructor – pass name of bible file
 
   // REQUIRED: Find and return a verse in this Bible, given a reference
-  Verse lookup(int pos, const Ref ref, LookupResult &status);
+  Verse lookup(const Ref ref, LookupResult &status);
   // REQUIRED:
   // Return the next verse from the Bible file stream if the file is open.
   // If the file is not open, open the file and return the first verse.

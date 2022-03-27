@@ -28,6 +28,9 @@ using namespace cgicc;
 using namespace std;
 
 // Stuff for Bible lookup
+#include "Ref.h"
+#include "Verse.h"
+#include "Bible.h"
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
@@ -37,8 +40,8 @@ using namespace std;
 #include "logfile.h"
 
 // Pipes for communication
-string receive_pipe = "SSreply";
-string send_pipe = "SSrequest";
+string receive_pipe = "WBreply";
+string send_pipe = "WBrequest";
 
 int main()
 {
@@ -137,25 +140,90 @@ int main()
     sendfifo.send(numberverses);
     log("Number of Verses: " + numberverses);
 
+    // Sends the bible type to be searched.
+    sendfifo.send(btStr);
+    log("Sending bible type: " + btStr);
+
     recfifo.openread();
     log("Open reply fifo");
 
     // output the response to the web page
-    string results = "initial";
-    int times = 0;
-    while (results != "$end")
+    string message, output, c = "0";
+    int bookstorage, chapterstorage;
+
+    /* Single verse lookup */
+    message = recfifo.recv(); // Expecting a status number 0-4
+    c = message;
+    log("result status: " + c); // Logs status
+    if (c == "0")               // Checks if status recieved is a succesful status
     {
-      log("Reply: " + results);
-      results = recfifo.recv();
-      if (results != "$end")
+      message = recfifo.recv(); // Recieves the verse
+      log("Reply: " + message); // Logs recieved verse
+      if (message != "$end")    // Checks for loop exit
       {
-        cout << results;
-        if (times++ > 2)
-        {
-          cout << "<br>";
-        }
+        Verse recverse = Verse(message); // Makes the verse
+        Ref ref = recverse.getRef();     // Makes the ref
+        bookstorage = ref.getBook();     // Stores book for header
+        chapterstorage = ref.getChap();  // Stores chapter for header
+
+        output = "<h3>" + bookmap[ref.getBook()] + "</h3>" +
+                 "<h4>" + to_string(ref.getChap()) + "</h4>" +
+                 "<p><sup>" + to_string(ref.getVerse()) + "</sup> <em>" + recverse.getVerse() + "</em>"; // Output is prepped for display
+
+        // cout << "<br>";
       }
     }
+    else
+    {
+      output += "<p>Lookup error: " + c + "</p>";
+      log("Bible lookup error recieved: " + c);
+    }
+
+    /* Loop for multiple verses */
+    while (message != "$end") // Loop only exits with valid response
+    {
+      message = recfifo.recv(); // Expecting a status number 0-4
+      c = message;
+      log("result status: " + c); // Logs status
+      if (c == "0")               // Checks if status recieved is a succesful status
+      {
+        message = recfifo.recv(); // Recieves the verse
+        log("Reply: " + message); // Logs recieved verse
+        if (message != "$end")    // Checks for loop exit
+        {
+          Verse recverse = Verse(message); // Makes the verse
+          Ref ref = recverse.getRef();     // Makes the ref
+
+          if (bookstorage != ref.getBook() || chapterstorage != ref.getChap())
+          {
+            /* New book title */
+            if (bookstorage != ref.getBook())
+            {
+              output += "</p><h3>" + bookmap[ref.getBook()] + "</h3>";
+              bookstorage = ref.getBook();
+            }
+
+            /* New chapter title */
+            if (chapterstorage != ref.getChap())
+            {
+              output += "</p><h4>" + to_string(ref.getChap()) + "</h4>";
+              chapterstorage = ref.getChap();
+            }
+          }
+
+          output += "<p><sup>" + to_string(ref.getVerse()) + "</sup> <em>" + recverse.getVerse() + "</em>"; // Output is prepped for display
+
+          // cout << output; // displays the output
+          //  cout << "<br>";
+        }
+      }
+      else
+      {
+        output += "<p>Lookup error: " + c + "</p>";
+        log("Bible lookup error recieved: " + c);
+      }
+    }
+    cout << output;
     cout << endl; // flush output when done
     recfifo.fifoclose();
     log("close reply fifo");
